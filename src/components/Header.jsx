@@ -1,3 +1,5 @@
+
+
 function Header({ shopName, itemCount }) {
   return (
     <div className="shop-header">

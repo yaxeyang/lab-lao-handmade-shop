@@ -7,25 +7,32 @@ import CartPanel from "./components/CartPanel.jsx";
 
 function App() {
   const [cart, setCart] = useState([]);
+  // 1. ເພີ່ມ State ສຳລັບເກັບໝວດໝູ່ທີ່ກຳລັງຖືກເລືອກ
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   function addToCart(product) {
     const existing = cart.find((i) => i.id === product.id);
     if (existing) {
-      existing.qty += 1;
+      // ແກ້ໄຂ: ສ້າງ Object ໃໝ່ໂດຍການ Map ເພື່ອຮັກສາ Immutable State
+      setCart(
+        cart.map((i) => (i.id === product.id ? { ...i, qty: i.qty + 1 } : i))
+      );
     } else {
-      cart.push({ ...product, qty: 1 });
+      // ແກ້ໄຂ: ໃຊ້ Spread Operator ເພີ່ມສິນຄ້າໃໝ່ເຂົ້າ Array ໂດຍບໍ່ mutation ຂອງເດີມ
+      setCart([...cart, { ...product, qty: 1 }]);
     }
-    setCart(cart);
   }
 
   function increase(id) {
-    setCart(cart.map((i) => (i.id === id ? { qty: i.qty + 1 } : i)));
+    // 2. ແກ້ໄຂ: ເພີ່ມ { ...i } ເພື່ອກະຈາຍ property ເດີມໄວ້ຄືເກົ່າ
+    setCart(cart.map((i) => (i.id === id ? { ...i, qty: i.qty + 1 } : i)));
   }
 
-  // compare with increase() above — this one works
   function decrease(id) {
     setCart(
-      cart.map((i) => (i.id === id ? { ...i, qty: i.qty - 1 } : i)).filter((i) => i.qty > 0)
+      cart
+        .map((i) => (i.id === id ? { ...i, qty: i.qty - 1 } : i))
+        .filter((i) => i.qty > 0)
     );
   }
 
@@ -33,7 +40,13 @@ function App() {
     setCart(cart.filter((i) => i.id !== id));
   }
 
-  const total = cart.reduce((sum, i) => sum + i.price, 0);
+  // 3. กອງສິນຄ້າຕາມໝວດໝູ່ທີ່ຜູ້ໃຊ້ເລືອກຈາກ FilterBar
+  const filteredProducts =
+    selectedCategory === "all"
+      ? products
+      : products.filter((p) => p.category === selectedCategory);
+
+  const total = cart.reduce((sum, i) => sum + i.price * i.qty, 0);
   const itemCount = cart.reduce((sum, i) => sum + i.qty, 0);
 
   return (
@@ -41,8 +54,10 @@ function App() {
       <Header shopName="ຮ້ານ Lao Handmade" itemCount={itemCount} />
       <div className="layout">
         <div>
-          <FilterBar />
-          <ProductGrid products={products} onAdd={addToCart} />
+          {/* ສົ່ງ Callback ໄປຮັບຄ່າ Filter */}
+          <FilterBar onChange={(category) => setSelectedCategory(category)} />
+          {/* ส่งສິນຄ້າທີ່ກອງແລ້ວໄປສະແດງ */}
+          <ProductGrid products={filteredProducts} onAdd={addToCart} />
         </div>
         <CartPanel
           cart={cart}
